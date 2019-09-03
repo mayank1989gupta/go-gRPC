@@ -61,3 +61,15 @@ Installations Required:
     - $sudo make install
     - $which protoc
     - $protoc --version
+
+Running the samples:
+
+    Greeting:
+    - To generate the greet.pb.go: "protoc greet/greetpb/greet.proto --go_out=plugins=grpc:."
+    - Running the server: go run greet/greet_server/server.go
+    - Running the client: go run greet/greet_client/client.go
+
+    Calculator:
+    - To genrate the calculator.pb.go: "protoc calculator/calculatorpb/calculator.proto --go_out=plugins=grpc:."
+    - Running the server: go run calculator/calculator_server/server.go
+    - Running the client: go run calculator/calculator_client/client.go
