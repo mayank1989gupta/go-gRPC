@@ -1,0 +1,39 @@
+//standard proto file
+syntax = "proto3";
+
+package calculator;
+option go_package = "calculatorpb";
+
+message SumRequest {
+    int32 first_Number = 1;
+    int32 second_Number = 2;
+}
+
+message SumResponse {
+    int32 sum_Result = 1;
+}
+
+message SubstractRequest {
+    int32 first_Number = 1;
+    int32 second_Number = 2;
+}
+
+message SubstractResponse {
+    int32 substract_Result = 1;
+}
+
+message PrimeNumberDecompositionRequest {
+    int64 number = 1;
+}
+
+message PrimeNumberDecompositionResponse {
+    int64 prime_factor = 1;
+}
+
+service CalculatorService {
+    //Unary Func
+    rpc Sum (SumRequest) returns (SumResponse) {};
+    rpc Substract(SubstractRequest) returns (SubstractResponse) {};
+
+    rpc PrimeNumberDecomposition (PrimeNumberDecompositionRequest) returns (stream PrimeNumberDecompositionResponse) {};
+}
