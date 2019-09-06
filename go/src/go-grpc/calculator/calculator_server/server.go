@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -32,6 +33,29 @@ func (*server) Substract(ctx context.Context, req *calculatorpb.SubstractRequest
 	}
 
 	return &res, nil
+}
+
+// Implementing ComputeAverage() from the interface
+func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAverageServer) error {
+	fmt.Println("Inside ComputeAverage() - server")
+	sum := int32(0)
+	count := 0
+
+	for {
+		req, err := stream.Recv()
+
+		if err == io.EOF {
+			return stream.SendAndClose(&calculatorpb.ComputeAverageResponse{
+				Result: float64(sum) / float64(count),
+			})
+		}
+
+		if err != nil {
+			log.Fatalf("Error while reading the stream from client: %v", err)
+		}
+		sum += req.GetNumber()
+		count++
+	}
 }
 
 // Server streaming func implementation

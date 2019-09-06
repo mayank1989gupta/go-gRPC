@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"../calculatorpb"
 
@@ -32,6 +33,9 @@ func main() {
 
 	//Server Streaming RPC Calls
 	doServerStreaming(c)
+
+	// Client Stream RPC
+	doClientStreaming(c)
 }
 
 //Util func to call the method implemented on server side
@@ -99,4 +103,44 @@ func doServerStreaming(c calculatorpb.CalculatorServiceClient) {
 		// No errors
 		log.Printf("Factor: %v", msg.GetPrimeFactor())
 	}
+}
+
+// doClientStreaming - Client Streaming RPC
+func doClientStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("Client Streaming RPC for Calculator Service")
+
+	requests := []*calculatorpb.ComputeAverageRequest{
+		&calculatorpb.ComputeAverageRequest{
+			Number: 1,
+		},
+		&calculatorpb.ComputeAverageRequest{
+			Number: 2,
+		},
+		&calculatorpb.ComputeAverageRequest{
+			Number: 3,
+		},
+		&calculatorpb.ComputeAverageRequest{
+			Number: 4,
+		},
+	}
+	// stream
+	stream, err := c.ComputeAverage(context.Background())
+
+	if err != nil {
+		log.Fatalf("Error while recieving result from server: %v", err)
+	}
+
+	for _, req := range requests {
+		stream.Send(req)
+		time.Sleep(1 * time.Second)
+	}
+	// Recieving the response
+	res, err := stream.CloseAndRecv()
+
+	if err != nil {
+		log.Fatalf("Error from server: %v", err)
+	}
+
+	//All good
+	fmt.Println("Response from server: ", res)
 }
