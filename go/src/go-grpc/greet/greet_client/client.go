@@ -34,7 +34,10 @@ func main() {
 	//doServerStreaming(c)
 
 	//Client Streaming
-	doClientStreaming(c)
+	//doClientStreaming(c)
+
+	//Client: Bi Directional Streaming
+	doBiDiStreaming(c)
 }
 
 // Method to perform Unary operation
@@ -137,4 +140,79 @@ func doClientStreaming(c greetpb.GreetServiceClient) {
 
 	fmt.Printf("Response from server: %v", response)
 	fmt.Println("")
+}
+
+// doBiDiStreaming streming
+func doBiDiStreaming(c greetpb.GreetServiceClient) {
+
+	//To call: GreetEveryone(ctx context.Context) (GreetService_GreetEveryoneClient, error)
+
+	fmt.Println("Client streaming RPC call")
+	requests := []*greetpb.GreetEveryoneRequest{
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Mayank",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "ABC",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "XYZ",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "ABCXYZ",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "ABCAXYTEST",
+			},
+		},
+	}
+
+	stream, err := c.GreetEveryone(context.Background())
+	if err != nil {
+		log.Fatalf("Error while reading stream from server: %v", err)
+		return
+	}
+
+	//channel
+	waitc := make(chan struct{})
+
+	// Func to send bunch of messages: using go routines
+	go func() {
+		for _, req := range requests {
+			fmt.Printf("Sending req: %v", req)
+			stream.Send(req)
+			time.Sleep(time.Second)
+		}
+
+		stream.CloseSend() // once all requests are done
+	}()
+
+	// to recieve bunch of messages
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf(" Error while reading response: %v", err)
+			}
+
+			fmt.Printf("Response from server: %v\n", res.GetResponse())
+		}
+
+		close(waitc) // once the waitc is closed it will unblock
+	}()
+
+	// block until everything is done - using channels
+	<-waitc // we will for channel to be closed
 }

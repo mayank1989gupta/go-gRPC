@@ -80,6 +80,34 @@ func (*server) PrimeNumberDecomposition(req *calculatorpb.PrimeNumberDecompositi
 	return nil
 }
 
+// FindMaximum - Bi Di Streaming
+func (*server) FindMaximum(stream calculatorpb.CalculatorService_FindMaximumServer) error {
+	fmt.Println("Invoking FindMaximum() - Bi-Directional Streaming!")
+	maximum := int32(0)
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			log.Fatalf("Error while reading stream from client: %v", err)
+			return err
+		}
+
+		number := req.GetNumber()
+		if number > maximum {
+			maximum = number
+			// Sending to stream once max found
+			sendErr := stream.Send(&calculatorpb.FindMaximumResponse{Maximum: maximum})
+			if sendErr != nil {
+				log.Fatalf("Error while sending response to client: %v", sendErr)
+				return sendErr
+			}
+		}
+	}
+}
+
 func main() {
 	fmt.Println("Hello!! This is calculator gRPC!")
 

@@ -68,6 +68,34 @@ func (*server) LongGreet(stream greetpb.GreetService_LongGreetServer) error {
 	}
 }
 
+// GreetEveryone - Server API for Bi-Directional Streaming
+func (*server) GreetEveryone(stream greetpb.GreetService_GreetEveryoneServer) error {
+	fmt.Println("GreetEveryone() function invoked - Bi Di Streaming")
+
+	for {
+		req, err := stream.Recv()
+
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+			return err
+		}
+
+		firstName := req.GetGreeting().GetFirstName()
+		result := "hello " + firstName + "!"
+
+		sendErr := stream.Send(&greetpb.GreetEveryoneResponse{Response: result})
+		if sendErr != nil {
+			log.Fatalf("Error while sending data to client: %v", err)
+			return err
+		}
+	}
+}
+
+// Main func
 func main() {
 	fmt.Println("Hello!!")
 	//50051 is the default port for grpc - binding port: 50051

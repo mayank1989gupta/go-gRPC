@@ -28,14 +28,17 @@ func main() {
 	// here c is the service client
 	c := calculatorpb.NewCalculatorServiceClient(conn)
 	//Unary RPC Calls
-	doSumUnary(c)
-	doSubsUnary(c)
+	//doSumUnary(c)
+	//doSubsUnary(c)
 
 	//Server Streaming RPC Calls
-	doServerStreaming(c)
+	//doServerStreaming(c)
 
 	// Client Stream RPC
-	doClientStreaming(c)
+	//doClientStreaming(c)
+
+	// Bi Directional Streaming
+	doBiDiStreaming(c)
 }
 
 //Util func to call the method implemented on server side
@@ -74,6 +77,7 @@ func doSubsUnary(c calculatorpb.CalculatorServiceClient) {
 	log.Printf("Response from server for substarct call: %v", res)
 }
 
+// doServerStreaming - Server Streaming
 func doServerStreaming(c calculatorpb.CalculatorServiceClient) {
 	//PrimeNumberDecomposition
 
@@ -143,4 +147,50 @@ func doClientStreaming(c calculatorpb.CalculatorServiceClient) {
 
 	//All good
 	fmt.Println("Response from server: ", res)
+}
+
+// Bi Directioanl Streaming - client
+func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("Bi Directaional Streaming RPC for Calculator Service")
+
+	stream, err := c.FindMaximum(context.Background())
+	if err != nil {
+		log.Fatalf("Error while reading stream from server: %v", err)
+		return
+	}
+
+	// channel
+	waitc := make(chan struct{})
+
+	// Sending stream to server - using go routines
+	go func() {
+		numbers := []int32{4, 7, 2, 19, 4, 6, 32}
+		for _, number := range numbers {
+			fmt.Printf("Sending Req to server: %v \n", number)
+			stream.Send(&calculatorpb.FindMaximumRequest{Number: number})
+			time.Sleep(time.Second)
+		}
+	}()
+
+	// Recieving stream from server - using go routines
+	go func() {
+		for {
+			res, err := stream.Recv()
+
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				log.Fatalf("Error while reading stream from server: %v", err)
+				return
+			}
+
+			fmt.Printf("Maximum Number: %v\n", res)
+		}
+		close(waitc) //unblocking the process
+	}()
+
+	// block until everything is done - using channels
+	<-waitc // we will for channel to be closed
 }
