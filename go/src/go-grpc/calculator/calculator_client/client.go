@@ -10,6 +10,8 @@ import (
 	"../calculatorpb"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -38,7 +40,10 @@ func main() {
 	//doClientStreaming(c)
 
 	// Bi Directional Streaming
-	doBiDiStreaming(c)
+	//doBiDiStreaming(c)
+
+	// Error Unary
+	doErrorUnary(c)
 }
 
 //Util func to call the method implemented on server side
@@ -193,4 +198,32 @@ func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
 
 	// block until everything is done - using channels
 	<-waitc // we will for channel to be closed
+}
+
+func doErrorUnary(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("Invkoing doErrorUnary()")
+	// Correct call
+	checkError(c, 16)
+
+	//Error Call
+	checkError(c, -1)
+}
+
+// checkError Util func
+func checkError(c calculatorpb.CalculatorServiceClient, number int32) {
+	res, err := c.SquareRoot(context.Background(), &calculatorpb.SquareRootRequest{Number: number})
+	if err != nil {
+		resErr, ok := status.FromError(err)
+		if ok {
+			// atcual error from GRPC
+			if resErr.Code() == codes.InvalidArgument {
+				fmt.Printf("%v\n", resErr.Message())
+			}
+		} else {
+			// BIG Error calling sqrt
+			log.Fatalf("Error while calling server RPC: %v\n", err)
+		}
+	}
+
+	fmt.Printf("Square Root: %v\n", res)
 }

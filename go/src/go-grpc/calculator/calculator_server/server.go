@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net"
+
+	"google.golang.org/grpc/codes"
 
 	"../calculatorpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 type server struct{}
@@ -106,6 +110,21 @@ func (*server) FindMaximum(stream calculatorpb.CalculatorService_FindMaximumServ
 			}
 		}
 	}
+}
+
+// SquareRoot - Implementation for SquareRoot() uniary function with error handling
+func (*server) SquareRoot(ctx context.Context, req *calculatorpb.SquareRootRequest) (*calculatorpb.SquareRootResponse, error) {
+	fmt.Println("Invoking the SquareRoot() Unary RPC")
+	number := req.GetNumber()
+
+	if number < 0 {
+		// Using grpc/status -> status.Errorf
+		return nil, status.Errorf(codes.InvalidArgument, "Recieved Negative Number")
+	}
+	// If no error -> return result
+	return &calculatorpb.SquareRootResponse{
+		Result: math.Sqrt(float64(number)),
+	}, nil
 }
 
 func main() {

@@ -46,6 +46,14 @@ message FindMaximumResponse {
     int32 maximum = 1;
 }
 
+message SquareRootRequest {
+    int32 number = 1;
+}
+
+message SquareRootResponse {
+    double result = 1;
+}
+
 service CalculatorService {
     //Unary Func
     rpc Sum (SumRequest) returns (SumResponse) {};
@@ -57,5 +65,9 @@ service CalculatorService {
     rpc ComputeAverage (stream ComputeAverageRequest) returns (ComputeAverageResponse) {};
 
     //Bi Directional Streaming
-    rpc  FindMaximum (stream FindMaximumRequest) returns (stream FindMaximumResponse) {}
+    rpc  FindMaximum (stream FindMaximumRequest) returns (stream FindMaximumResponse) {};
+    
+    //Unary Func to find Square Root - This RPC will throw error if number is negative
+    //Error sent would be of type -> INVALID_ARGUMENT
+    rpc SquareRoot (SquareRootRequest) returns (SquareRootResponse) {};
 }
